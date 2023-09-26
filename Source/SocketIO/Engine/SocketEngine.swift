@@ -285,8 +285,6 @@ open class SocketEngine : NSObject, URLSessionDelegate, SocketEnginePollable, So
     private func createWebSocketAndConnect() {
         var req = URLRequest(url: urlWebSocketWithSid)
 
-        addHeaders(to: &req, includingCookies: session?.configuration.httpCookieStorage?.cookies(for: urlPollingWithSid))
-
         let stream = FoundationStream()
         stream.enableSOCKSProxy = enableSOCKSProxy
         ws = WebSocket(request: req, stream: stream)
