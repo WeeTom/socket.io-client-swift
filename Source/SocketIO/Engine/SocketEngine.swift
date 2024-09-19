@@ -127,9 +127,6 @@ open class SocketEngine : NSObject, URLSessionDelegate, SocketEnginePollable, So
 
     private let url: URL
     
-    private var addTokenToHeaders = false
-    private var token:String?
-    
     private var pingInterval: Int?
     private var pingTimeout = 0 {
         didSet {
@@ -247,9 +244,6 @@ open class SocketEngine : NSObject, URLSessionDelegate, SocketEnginePollable, So
         var reqPolling = URLRequest(url: urlPolling, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 60.0)
         
         addHeaders(to: &reqPolling)
-        if self.addTokenToHeaders == true, let tk = self.token {
-            reqPolling.setValue(tk, forHTTPHeaderField: "token")
-        }
         doLongPoll(for: reqPolling)
     }
 
@@ -277,12 +271,6 @@ open class SocketEngine : NSObject, URLSessionDelegate, SocketEnginePollable, So
             for (key, value) in connectParams {
                 let keyEsc = key.urlEncode()!
                 let valueEsc = "\(value)".urlEncode()!
-                if keyEsc == "token" {
-                    addTokenToHeaders = true
-                    token = valueEsc
-                    continue
-                }
-                
                 queryString += "&\(keyEsc)=\(valueEsc)"
             }
         }
@@ -295,13 +283,11 @@ open class SocketEngine : NSObject, URLSessionDelegate, SocketEnginePollable, So
 
     private func createWebSocketAndConnect() {
         var req = URLRequest(url: urlWebSocketWithSid)
-        
+        addHeaders(to: &req)
+
         let stream = FoundationStream()
         stream.enableSOCKSProxy = enableSOCKSProxy
         ws = WebSocket(request: req, stream: stream)
-        if addTokenToHeaders == true, let tk = self.token {
-            ws?.request.setValue(tk, forHTTPHeaderField: "token")
-        }
         ws?.callbackQueue = engineQueue
         ws?.enableCompression = compress
         ws?.disableSSLCertValidation = selfSigned
